@@ -9,8 +9,8 @@ import (
 
 var db *sql.DB
 
-func Init(cfg *Config) (*sql.DB, error) {
-	dsn := toDSN(cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.DBName, cfg.SSLMode)
+func Init(cfg Config) (*sql.DB, error) {
+	dsn := toDSN(cfg.GetHost(), cfg.GetPort(), cfg.GetUsername(), cfg.GetPassword(), cfg.GetDBName(), cfg.GetSSLMode())
 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -21,8 +21,8 @@ func Init(cfg *Config) (*sql.DB, error) {
 		return nil, err
 	}
 
-	conn.SetMaxIdleConns(cfg.MaxIdleConns)
-	conn.SetMaxOpenConns(cfg.MaxOpenConns)
+	conn.SetMaxIdleConns(cfg.GetMaxIdleConns())
+	conn.SetMaxOpenConns(cfg.GetMaxOpenConns())
 
 	db = conn
 

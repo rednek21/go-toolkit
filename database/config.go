@@ -12,14 +12,14 @@ type Config interface {
 }
 
 type BaseConfig struct {
-	Host         string
-	Port         int
-	Username     string
-	Password     string
-	DBName       string
-	SSLMode      string
-	MaxIdleConns int
-	MaxOpenConns int
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	Username     string `yaml:"username"`
+	Password     string `yaml:"password"`
+	DBName       string `yaml:"db-name"`
+	SSLMode      string `yaml:"ssl-mode"`
+	MaxIdleConns int    `yaml:"max-idle-conn's"`
+	MaxOpenConns int    `yaml:"max-open-conn's"`
 }
 
 func NewBaseConfig(host string, port int, username, password, dbName, sslMode string, maxIdleConns, maxOpenConns int) *BaseConfig {

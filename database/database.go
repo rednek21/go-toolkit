@@ -8,7 +8,7 @@ import (
 
 var db *sql.DB
 
-func Init(cfg Config) (*sql.DB, error) {
+func Init(cfg *Config) (*sql.DB, error) {
 	dsn := toDSN(cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.DBName, cfg.SSLMode)
 
 	conn, err := sql.Open("postgres", dsn)

@@ -1,49 +1,75 @@
 package database
 
 import (
-	"database/sql"
-	"errors"
+	"context"
 	"fmt"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var db *sql.DB
+type Database struct {
+	Pool *pgxpool.Pool
+}
 
-func Init(cfg Config) (*sql.DB, error) {
-	dsn := toDSN(cfg.GetHost(), cfg.GetPort(), cfg.GetUsername(), cfg.GetPassword(), cfg.GetDBName(), cfg.GetSSLMode())
-
-	conn, err := sql.Open("postgres", dsn)
+func New(ctx context.Context, cfg *Config) (*Database, error) {
+	dsn, err := getDSNFromEnv()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := conn.Ping(); err != nil {
+	if cfg.MinConns <= 0 || cfg.MaxConns <= 0 || cfg.MaxIdleConns <= 0 || cfg.ConnLifetime <= 0 {
+		return nil, fmt.Errorf("invalid database configuration: %v", cfg)
+	}
+
+	poolConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
 		return nil, err
 	}
 
-	conn.SetMaxIdleConns(cfg.GetMaxIdleConns())
-	conn.SetMaxOpenConns(cfg.GetMaxOpenConns())
+	poolConfig.MinConns = int32(cfg.MinConns)
+	poolConfig.MaxConns = int32(cfg.MaxConns)
+	poolConfig.MaxConnIdleTime = cfg.MaxIdleConns
+	poolConfig.MaxConnLifetime = cfg.ConnLifetime
 
-	db = conn
-
-	return db, nil
-}
-
-func GetDB() (*sql.DB, error) {
-	if db == nil {
-		return nil, errors.New("database not initialized")
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		return nil, err
 	}
-	return db, nil
-}
 
-func CloseDB() error {
-	if db == nil {
-		return nil
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping the database: %w", err)
 	}
-	return db.Close()
+
+	return &Database{
+		Pool: pool,
+	}, nil
 }
 
-func toDSN(host string, port int, username, password, dbName, sslMode string) string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=%s",
-		username, password, host, port, dbName, sslMode)
+func (d *Database) Ping(ctx context.Context) error {
+	if err := d.Pool.Ping(ctx); err != nil {
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+	return nil
+}
+
+func (d *Database) Close() {
+	d.Pool.Close()
+}
+
+func (d *Database) RunInTransaction(ctx context.Context, fn func(tx pgx.Tx) error) error {
+	tx, err := d.Pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	if err := fn(tx); err != nil {
+		return fmt.Errorf("transaction failed: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }

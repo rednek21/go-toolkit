@@ -15,28 +15,14 @@ const (
 
 	STDOUT = "stdout"
 	STDERR = "stderr"
-)
 
-//func NewLogger(logFile string, level zapcore.Level) (*zap.Logger, error) {
-//	config := zap.NewProductionConfig()
-//	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-//
-//	consoleEncoder := zapcore.NewConsoleEncoder(config.EncoderConfig)
-//	fileEncoder := zapcore.NewJSONEncoder(config.EncoderConfig)
-//
-//	file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	consoleCore := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level)
-//	fileCore := zapcore.NewCore(fileEncoder, zapcore.AddSync(file), level)
-//
-//	return zap.New(zapcore.NewTee(consoleCore, fileCore),
-//		zap.AddCaller(),
-//		zap.AddStacktrace(zap.ErrorLevel),
-//	), nil
-//}
+	DEBUG = "debug"
+	INFO  = "info"
+	WARN  = "warn"
+	ERROR = "error"
+	FATAL = "fatal"
+	PANIC = "panic"
+)
 
 func New(cfg *Config) (*zap.Logger, error) {
 	level, err := parseLogLevel(cfg.Level)
@@ -49,14 +35,14 @@ func New(cfg *Config) (*zap.Logger, error) {
 	var cores []zapcore.Core
 
 	if cfg.FilePath != "" {
-		fyleSyncer := zapcore.AddSync(&lumberjack.Logger{
+		fileSyncer := zapcore.AddSync(&lumberjack.Logger{
 			Filename:   cfg.FilePath,
 			MaxSize:    cfg.MaxSizeMB,
 			MaxBackups: cfg.MaxBackups,
 			MaxAge:     cfg.MaxAgeDays,
 			Compress:   cfg.Compress,
 		})
-		cores = append(cores, zapcore.NewCore(encoder, fyleSyncer, level))
+		cores = append(cores, zapcore.NewCore(encoder, fileSyncer, level))
 	}
 
 	if cfg.Output == STDOUT || cfg.Output == STDERR {
@@ -88,7 +74,10 @@ func getEncoder(format string) zapcore.Encoder {
 	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
 	if format == JSON {
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 		return zapcore.NewJSONEncoder(encoderConfig)
 	}
+
+	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	return zapcore.NewConsoleEncoder(encoderConfig)
 }

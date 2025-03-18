@@ -7,13 +7,6 @@ import (
 	"time"
 )
 
-type ManagerConfig struct {
-	AccessSecret  string
-	RefreshSecret string
-	AccessTTL     time.Duration
-	RefreshTTL    time.Duration
-}
-
 type Claims struct {
 	Username    string   `json:"username"`
 	Roles       []string `json:"roles"`
@@ -28,12 +21,12 @@ type Manager struct {
 	RefreshTTL    time.Duration
 }
 
-func NewManager(cfg *ManagerConfig) *Manager {
+func NewManager(AccessSecret, RefreshSecret string, AccessTTL, RefreshTTL time.Duration) *Manager {
 	return &Manager{
-		AccessSecret:  cfg.AccessSecret,
-		RefreshSecret: cfg.RefreshSecret,
-		AccessTTL:     cfg.AccessTTL,
-		RefreshTTL:    cfg.RefreshTTL,
+		AccessSecret:  AccessSecret,
+		RefreshSecret: RefreshSecret,
+		AccessTTL:     AccessTTL,
+		RefreshTTL:    RefreshTTL,
 	}
 }
 
@@ -50,9 +43,7 @@ func (m *Manager) GenerateTokenPair(username string, roles, permissions []string
 			ID:        uuid.New().String(),
 		},
 	}
-
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString([]byte(m.AccessSecret))
+	accessToken, err := m.generateToken(m.AccessSecret, accessClaims)
 	if err != nil {
 		return "", "", err
 	}
@@ -65,13 +56,12 @@ func (m *Manager) GenerateTokenPair(username string, roles, permissions []string
 			ID:        uuid.New().String(),
 		},
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString([]byte(m.RefreshSecret))
+	refreshToken, err := m.generateToken(m.RefreshSecret, refreshClaims)
 	if err != nil {
 		return "", "", err
 	}
 
-	return accessTokenString, refreshTokenString, nil
+	return accessToken, refreshToken, nil
 }
 
 func (m *Manager) ParseToken(tokenString string, isRefresh bool) (*Claims, error) {
@@ -94,5 +84,11 @@ func (m *Manager) ParseToken(tokenString string, isRefresh bool) (*Claims, error
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token")
 	}
+
 	return claims, nil
+}
+
+func (m *Manager) generateToken(secret string, claims Claims) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
 }

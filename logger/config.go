@@ -1,6 +1,5 @@
 package logger
 
-// Config описывает параметры логирования.
 type Config struct {
 	Level      string `yaml:"level" json:"level"`
 	Format     string `yaml:"format" json:"format"`

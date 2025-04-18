@@ -12,10 +12,6 @@ type LoaderConfig struct {
 	Path string
 }
 
-// NewConfigLoader создает загрузчик конфигурации с поиском пути:
-// 1. Аргумент `-config` (если указан).z
-// 2. Переменная окружения `CONFIG_PATH`.
-// 3. `defaultPath`, если ничего не найдено.
 func NewLoaderConfig(defaultPath string) *LoaderConfig {
 	var path string
 	flag.StringVar(&path, "config", "", "Path to the configuration file")
@@ -32,12 +28,10 @@ func NewLoaderConfig(defaultPath string) *LoaderConfig {
 	return &LoaderConfig{Path: path}
 }
 
-// Load загружает конфигурацию в переданную структуру
 func (cl *LoaderConfig) Load(cfg interface{}) error {
 	return LoadConfig(cl.Path, cfg)
 }
 
-// LoadConfig загружает конфигурацию из файла или переменной окружения
 func LoadConfig(path string, cfg interface{}) error {
 	data, err := os.ReadFile(path)
 	if err != nil {

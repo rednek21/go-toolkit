@@ -60,14 +60,12 @@ func New(cfg *Config) (*zap.Logger, error) {
 	return logger, nil
 }
 
-// parseLogLevel приводит строковый level в zapcore.Level
 func parseLogLevel(levelStr string) (zapcore.Level, error) {
 	var level zapcore.Level
 	err := level.UnmarshalText([]byte(levelStr))
 	return level, err
 }
 
-// getEncoder возвращает кодировщик для JSON или console
 func getEncoder(format string) zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)

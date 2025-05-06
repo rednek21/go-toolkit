@@ -26,8 +26,8 @@ type ErrorImpl struct {
 	Details any     `json:"details,omitempty"`
 }
 
-func New(code ErrCode, message string, err error) *ErrorImpl {
-	return &ErrorImpl{
+func New(code ErrCode, message string, err error) ErrorImpl {
+	return ErrorImpl{
 		Code:    code,
 		Message: message,
 		Err:     err,

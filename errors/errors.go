@@ -34,27 +34,27 @@ func New(code ErrCode, message string, err error) ErrorImpl {
 	}
 }
 
-func (e *ErrorImpl) Error() string {
+func (e ErrorImpl) Error() string {
 	if e.Err != nil {
 		return fmt.Sprintf("[%s] %s: %v", e.Code, e.Message, e.Err)
 	}
 	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
 }
 
-func (e *ErrorImpl) Unwrap() error {
+func (e ErrorImpl) Unwrap() error {
 	return e.Err
 }
 
-func (e *ErrorImpl) WithDetails(details any) *ErrorImpl {
+func (e ErrorImpl) WithDetails(details any) ErrorImpl {
 	e.Details = details
 	return e
 }
 
-func (e *ErrorImpl) GRPCStatus() *status.Status {
+func (e ErrorImpl) GRPCStatus() *status.Status {
 	return status.New(e.toGRPCCode(), e.Message)
 }
 
-func (e *ErrorImpl) toGRPCCode() codes.Code {
+func (e ErrorImpl) toGRPCCode() codes.Code {
 	switch e.Code {
 	case ErrCodeNotFound:
 		return codes.NotFound
@@ -71,7 +71,7 @@ func (e *ErrorImpl) toGRPCCode() codes.Code {
 	}
 }
 
-func (e *ErrorImpl) Is(target error) bool {
+func (e ErrorImpl) Is(target error) bool {
 	t, ok := target.(*ErrorImpl)
 	if !ok {
 		return false

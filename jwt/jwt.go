@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=jwt.go -destination=./mock/jwt/mock_jwt.go -package=mock_jwt
+type TokenManager interface {
+	GenerateTokenPair(username string, roles, permissions []string) (accessToken, refreshToken string, err error)
+	ParseToken(tokenString string, isRefresh bool) (*Claims, error)
+}
+
 type Claims struct {
 	Username    string   `json:"username"`
 	Roles       []string `json:"roles"`

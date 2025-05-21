@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"time"
@@ -9,8 +10,13 @@ import (
 
 //go:generate mockgen -source=jwt.go -destination=./mock/jwt/mock_jwt.go -package=mock_jwt
 type TokenManager interface {
-	GenerateTokenPair(username string, roles, permissions []string) (accessToken, refreshToken string, err error)
+	GenerateTokenPair(username string, roles, permissions []string) (*TokenPair, error)
 	ParseToken(tokenString string, isRefresh bool) (*Claims, error)
+}
+
+type TokenPair struct {
+	AccessToken  string
+	RefreshToken string
 }
 
 type Claims struct {
@@ -36,7 +42,7 @@ func NewManager(AccessSecret, RefreshSecret string, AccessTTL, RefreshTTL time.D
 	}
 }
 
-func (m *Manager) GenerateTokenPair(username string, roles, permissions []string) (string, string, error) {
+func (m *Manager) GenerateTokenPair(username string, roles, permissions []string) (*TokenPair, error) {
 	now := time.Now()
 
 	accessClaims := Claims{
@@ -51,7 +57,7 @@ func (m *Manager) GenerateTokenPair(username string, roles, permissions []string
 	}
 	accessToken, err := m.generateToken(m.AccessSecret, accessClaims)
 	if err != nil {
-		return "", "", err
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
 	refreshClaims := Claims{
@@ -64,10 +70,13 @@ func (m *Manager) GenerateTokenPair(username string, roles, permissions []string
 	}
 	refreshToken, err := m.generateToken(m.RefreshSecret, refreshClaims)
 	if err != nil {
-		return "", "", err
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
-	return accessToken, refreshToken, nil
+	return &TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (m *Manager) ParseToken(tokenString string, isRefresh bool) (*Claims, error) {

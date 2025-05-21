@@ -41,13 +41,12 @@ func (m *MockTokenManager) EXPECT() *MockTokenManagerMockRecorder {
 }
 
 // GenerateTokenPair mocks base method.
-func (m *MockTokenManager) GenerateTokenPair(username string, roles, permissions []string) (string, string, error) {
+func (m *MockTokenManager) GenerateTokenPair(username string, roles, permissions []string) (*jwt.TokenPair, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GenerateTokenPair", username, roles, permissions)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(*jwt.TokenPair)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GenerateTokenPair indicates an expected call of GenerateTokenPair.

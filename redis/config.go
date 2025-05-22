@@ -3,19 +3,20 @@ package redis
 import "time"
 
 type Config struct {
-	Cluster struct {
-		Enabled bool     `yaml:"enabled"`
-		Nodes   []string `yaml:"nodes"`
-	} `yaml:"cluster"`
-
+	Cluster        ClusterConfig        `yaml:"cluster"`
+	Retry          RetryConfig          `yaml:"retry"`
+	CircuitBreaker CircuitBreakerConfig `yaml:"circuit-breaker"`
 	Password       string               `yaml:"password"`
 	DialTimeout    time.Duration        `yaml:"dial-timeout"`
 	ReadTimeout    time.Duration        `yaml:"read-timeout"`
 	WriteTimeout   time.Duration        `yaml:"write-timeout"`
 	MaxRetries     int                  `yaml:"max-retries"`
 	PoolSize       int                  `yaml:"pool-size"`
-	Retry          RetryConfig          `yaml:"retry"`
-	CircuitBreaker CircuitBreakerConfig `yaml:"circuit-breaker"`
+}
+
+type ClusterConfig struct {
+	Enabled bool     `yaml:"enabled"`
+	Nodes   []string `yaml:"nodes"`
 }
 
 type RetryConfig struct {

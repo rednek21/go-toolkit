@@ -35,13 +35,13 @@ func New(cfg *Config) (*zap.Logger, error) {
 	var cores []zapcore.Core
 
 	if cfg.FilePath != "" {
-		fileSyncer := zapcore.AddSync(&lumberjack.Logger{
+		fileSyncer := zapcore.Lock(zapcore.AddSync(&lumberjack.Logger{
 			Filename:   cfg.FilePath,
 			MaxSize:    cfg.MaxSizeMB,
 			MaxBackups: cfg.MaxBackups,
 			MaxAge:     cfg.MaxAgeDays,
 			Compress:   cfg.Compress,
-		})
+		}))
 		cores = append(cores, zapcore.NewCore(encoder, fileSyncer, level))
 	}
 
@@ -51,6 +51,10 @@ func New(cfg *Config) (*zap.Logger, error) {
 			consoleSyncer = zapcore.Lock(os.Stderr)
 		}
 		cores = append(cores, zapcore.NewCore(encoder, consoleSyncer, level))
+	}
+
+	if len(cores) == 0 {
+		cores = append(cores, zapcore.NewCore(getEncoder(JSON), zapcore.AddSync(os.Stdout), zapcore.InfoLevel))
 	}
 
 	core := zapcore.NewTee(cores...)

@@ -15,6 +15,7 @@ type Cluster struct {
 	retryCount   int
 	retryBackoff time.Duration
 	maxBackoff   time.Duration
+	defaultTTL   time.Duration
 }
 
 func InitRedisCluster(ctx context.Context, cfg Config) (*Cluster, error) {
@@ -33,6 +34,7 @@ func InitRedisCluster(ctx context.Context, cfg Config) (*Cluster, error) {
 		retryCount:   cfg.Retry.MaxTries,
 		retryBackoff: cfg.Retry.Backoff,
 		maxBackoff:   cfg.Retry.MaxBackoff,
+		defaultTTL:   cfg.DefaultTTL,
 	}
 
 	if cfg.CircuitBreaker.Enabled {

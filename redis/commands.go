@@ -6,6 +6,10 @@ import (
 )
 
 func (c *Cluster) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	if expiration <= 0 {
+		expiration = c.defaultTTL
+	}
+
 	op := func() (interface{}, error) {
 		return nil, c.Client.Set(ctx, key, value, expiration).Err()
 	}

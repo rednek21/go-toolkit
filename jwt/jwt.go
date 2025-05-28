@@ -20,9 +20,7 @@ type TokenPair struct {
 }
 
 type Claims struct {
-	Username    string   `json:"username"`
-	Roles       []string `json:"roles"`
-	Permissions []string `json:"permissions"`
+	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
@@ -46,9 +44,7 @@ func (m *Manager) GenerateTokenPair(username string, roles, permissions []string
 	now := time.Now()
 
 	accessClaims := Claims{
-		Username:    username,
-		Roles:       roles,
-		Permissions: permissions,
+		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(m.AccessTTL)),

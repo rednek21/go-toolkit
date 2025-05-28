@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -25,6 +26,21 @@ func (c *Cluster) Set(ctx context.Context, key string, value interface{}, expira
 		_, err := op()
 		return err
 	})
+}
+
+func (c *Cluster) SAdd(ctx context.Context, key string, members ...interface{}) (int64, error) {
+	op := func() (interface{}, error) {
+		return c.Client.SAdd(ctx, key, members...).Result()
+	}
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return 0, err
+		}
+		return res.(int64), nil
+	}
+	res, err := op()
+	return res.(int64), err
 }
 
 func (c *Cluster) GetDel(ctx context.Context, key string) (string, error) {
@@ -111,6 +127,43 @@ func (c *Cluster) TTL(ctx context.Context, key string) (time.Duration, error) {
 	}
 	res, err := op()
 	return res.(time.Duration), err
+}
+
+func (c *Cluster) Touch(ctx context.Context, key string, ttl time.Duration) error {
+	if ttl <= 0 {
+		ttl = c.defaultTTL
+	}
+	op := func() (interface{}, error) {
+		ok, err := c.Client.Expire(ctx, key, ttl).Result()
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("key %s does not exist or ttl not set", key)
+		}
+		return nil, nil
+	}
+	if c.cb != nil {
+		_, err := c.cb.Execute(op)
+		return err
+	}
+	_, err := op()
+	return err
+}
+
+func (c *Cluster) Persist(ctx context.Context, key string) (bool, error) {
+	op := func() (interface{}, error) {
+		return c.Client.Persist(ctx, key).Result()
+	}
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return false, err
+		}
+		return res.(bool), nil
+	}
+	res, err := op()
+	return res.(bool), err
 }
 
 func (c *Cluster) Incr(ctx context.Context, key string) (int64, error) {

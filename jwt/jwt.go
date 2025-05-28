@@ -10,7 +10,7 @@ import (
 
 //go:generate mockgen -source=jwt.go -destination=./mock/jwt/mock_jwt.go -package=mock_jwt
 type TokenManager interface {
-	GenerateTokenPair(username string, roles, permissions []string) (*TokenPair, error)
+	GenerateTokenPair(username string) (*TokenPair, error)
 	ParseToken(tokenString string, isRefresh bool) (*Claims, error)
 }
 
@@ -40,7 +40,7 @@ func NewManager(AccessSecret, RefreshSecret string, AccessTTL, RefreshTTL time.D
 	}
 }
 
-func (m *Manager) GenerateTokenPair(username string, roles, permissions []string) (*TokenPair, error) {
+func (m *Manager) GenerateTokenPair(username string) (*TokenPair, error) {
 	now := time.Now()
 
 	accessClaims := Claims{

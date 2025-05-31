@@ -43,6 +43,21 @@ func (c *Cluster) SAdd(ctx context.Context, key string, members ...interface{}) 
 	return res.(int64), err
 }
 
+func (c *Cluster) SMembers(ctx context.Context, key string) ([]string, error) {
+	op := func() (interface{}, error) {
+		return c.Client.SMembers(ctx, key).Result()
+	}
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return nil, err
+		}
+		return res.([]string), nil
+	}
+	res, err := op()
+	return res.([]string), err
+}
+
 func (c *Cluster) GetDel(ctx context.Context, key string) (string, error) {
 	if c.cb != nil {
 		res, err := c.cb.Execute(func() (interface{}, error) {

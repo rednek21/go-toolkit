@@ -100,6 +100,10 @@ func (c *Cluster) Exists(ctx context.Context, keys ...string) (int64, error) {
 }
 
 func (c *Cluster) Expire(ctx context.Context, key string, ttl time.Duration) (bool, error) {
+	if ttl <= 0 {
+		ttl = c.defaultTTL
+	}
+
 	op := func() (interface{}, error) {
 		return c.Client.Expire(ctx, key, ttl).Result()
 	}

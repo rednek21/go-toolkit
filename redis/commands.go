@@ -93,6 +93,93 @@ func (c *Cluster) SMIsMember(ctx context.Context, key string, members ...interfa
 	return res.([]bool), err
 }
 
+// SRem removes one or more members from a set
+func (c *Cluster) SRem(ctx context.Context, key string, members ...interface{}) (int64, error) {
+	op := func() (interface{}, error) {
+		return c.Client.SRem(ctx, key, members...).Result()
+	}
+
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return 0, err
+		}
+		return res.(int64), nil
+	}
+
+	res, err := op()
+	return res.(int64), err
+}
+
+// SetMembersCount returns the number of elements in a set
+func (c *Cluster) SetMembersCount(ctx context.Context, key string) (int64, error) {
+	op := func() (interface{}, error) {
+		return c.Client.SCard(ctx, key).Result()
+	}
+
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return 0, err
+		}
+		return res.(int64), nil
+	}
+
+	res, err := op()
+	return res.(int64), err
+}
+
+// Keys returns all keys matching the pattern (use with caution in production)
+func (c *Cluster) Keys(ctx context.Context, pattern string) ([]string, error) {
+	op := func() (interface{}, error) {
+		return c.Client.Keys(ctx, pattern).Result()
+	}
+
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return nil, err
+		}
+		return res.([]string), nil
+	}
+
+	res, err := op()
+	return res.([]string), err
+}
+
+// Rename renames a key
+func (c *Cluster) Rename(ctx context.Context, oldKey, newKey string) error {
+	op := func() (interface{}, error) {
+		return nil, c.Client.Rename(ctx, oldKey, newKey).Err()
+	}
+
+	if c.cb != nil {
+		_, err := c.cb.Execute(op)
+		return err
+	}
+
+	_, err := op()
+	return err
+}
+
+// RenameNX renames a key only if the new key does not exist
+func (c *Cluster) RenameNX(ctx context.Context, oldKey, newKey string) (bool, error) {
+	op := func() (interface{}, error) {
+		return c.Client.RenameNX(ctx, oldKey, newKey).Result()
+	}
+
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return false, err
+		}
+		return res.(bool), nil
+	}
+
+	res, err := op()
+	return res.(bool), err
+}
+
 // GetDel gets the value of a key and deletes it
 func (c *Cluster) GetDel(ctx context.Context, key string) (string, error) {
 	if c.cb != nil {

@@ -111,8 +111,8 @@ func (c *Cluster) SRem(ctx context.Context, key string, members ...interface{}) 
 	return res.(int64), err
 }
 
-// SetMembersCount returns the number of elements in a set
-func (c *Cluster) SetMembersCount(ctx context.Context, key string) (int64, error) {
+// SCard returns the number of elements in a set
+func (c *Cluster) SCard(ctx context.Context, key string) (int64, error) {
 	op := func() (interface{}, error) {
 		return c.Client.SCard(ctx, key).Result()
 	}

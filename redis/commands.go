@@ -58,6 +58,21 @@ func (c *Cluster) SMembers(ctx context.Context, key string) ([]string, error) {
 	return res.([]string), err
 }
 
+func (c *Cluster) SIsMember(ctx context.Context, key string, member interface{}) (bool, error) {
+	op := func() (interface{}, error) {
+		return c.Client.SIsMember(ctx, key, member).Result()
+	}
+	if c.cb != nil {
+		res, err := c.cb.Execute(op)
+		if err != nil {
+			return false, err
+		}
+		return res.(bool), nil
+	}
+	res, err := op()
+	return res.(bool), err
+}
+
 func (c *Cluster) GetDel(ctx context.Context, key string) (string, error) {
 	if c.cb != nil {
 		res, err := c.cb.Execute(func() (interface{}, error) {
